@@ -5,10 +5,12 @@ class MessageType(Enum):
     DHCPDISCOVER = 1
     DHCPOFFER = 2
     DHCPREQUEST = 3
-    DHCPACK = 4
-    ROUTERLISTREQUEST = 5
-    ROUTERLISTRESPONSE = 6
-    WELCOME = 7
+    DHCPROUTERREQUEST = 4
+    DHCPACK = 5
+    DHCPROUTERACK = 6
+    ROUTERLISTREQUEST = 7
+    ROUTERLISTRESPONSE = 8
+    WELCOME = 9
 
 class Message:
     def __init__(self, CompactMessage):
@@ -24,7 +26,8 @@ class Message:
         self.destinationIP = "255.255.255.255"
         self.sourceMac = "00:00:00:00:00:00"
         self.destinationMac = "00:00:00:00:00:00"
-        self.messageType = MessageType.NONE;
+        self.messageType = MessageType.NONE
+        #Penso sia il caso di nominarlo in maniera differente per evitare errori dovuti all'omonimia
         self.message = ""
 
     def __str__(self):
@@ -32,3 +35,9 @@ class Message:
 
     def setMessageType(self, type):
         self.messageType = type
+
+    def prepareForNextMessage(self):
+        self.destinationIP = self.sourceIP
+        self.destinationMac = self.sourceMac
+        self.messageType = MessageType.NONE
+        self.message = ""
