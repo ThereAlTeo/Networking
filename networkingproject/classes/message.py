@@ -11,16 +11,18 @@ class MessageType(Enum):
     DHCP_REQUEST = 3
     DHCP_ROUTER_REQUEST = 4
     DHCP_ACK = 5
-    DHCP_ROUTE_RACK = 6
+    DHCP_ROUTER_ACK = 6
     ROUTER_LIST_REQUEST = 7
     ROUTER_LIST_RESPONSE = 8
-    WELCOME = 9
+    ROUTER_LIST_EMPTY = 9
+    WELCOME = 10
 
 
 class Message:
     """
     This class handles the messages itself, with source, destination, type and text.
     """
+
     def __init__(self, source_mac: str, source_ip: str, destination_mac: str, destination_ip: str,
                  message_type: MessageType, text: str):
         """
@@ -41,3 +43,9 @@ class Message:
         self.destination_ip = destination_ip
         self.message_type = message_type
         self.text = text
+
+    def prepare_for_next_message(self):
+        self.destination_ip = self.source_ip
+        self.destination_mac = self.source_mac
+        self.message_type = MessageType.NONE
+        self.text = ""
