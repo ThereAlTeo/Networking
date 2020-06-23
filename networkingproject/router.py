@@ -6,6 +6,11 @@ import http.server
 import socketserver
 from threading import Thread
 
+# Dizionario che continene Key=IndirizzoIP Value=socket
+clientIpSocket = {}
+#Dizionario che contine Key=IndirizzoIP Value=IndirizzoMac
+clientMacSocket = {}
+
 macServerSide = ''
 ipServerSide = ''
 macClientSide = ''
@@ -16,7 +21,7 @@ routerServerSide = socket(AF_INET, SOCK_STREAM)
 routerClientSide = socket(AF_INET, SOCK_STREAM)
 
 
-def welcomeType(message):
+def welcome_type(message):
     print("Il SERVER ha dato il Benvenuto!")
     message.prepareForNextMessage()
     message.source_ip = "255.255.255.255"
@@ -26,43 +31,67 @@ def welcomeType(message):
     return message
 
 
-def managementServerMessage(message):
+def router_interface_ip(message):
+    global ipClientSide, ipServerSide
+    print("Il SERVER ha restituito gli indirizzi IP delle interfacce lato client e server!")
+    content = message.text
+    print(content)
+    message.prepareForNextMessage()
+    message.message_type = MessageType.NONE
+    ipServerSide = content.split("\n")[0].split(":")[1]
+    ipClientSide = content.split("\n")[1].split(":")[1]
+    return message
+
+
+def management_server_message(message):
     switcher = {
-        MessageType.WELCOME: welcomeType,
-        MessageType.DHCP_REQUEST: welcomeType,
-        MessageType.ROUTER_LIST_REQUEST: welcomeType,
+        MessageType.WELCOME: welcome_type,
+        MessageType.DHCP_ROUTER_ACK: router_interface_ip,
+        MessageType.DHCP_REQUEST: welcome_type,
+        MessageType.ROUTER_LIST_REQUEST: welcome_type,
     }
     return switcher.get(message.messageType)(message)
 
 
-def reciveMessageFromServer():
+def recive_message_from_server():
     while True:
         try:
             message = util.deserializeClass(routerServerSide.recv(util.getDefaultBufferSize()))
             print("E' arrivato un messaggio dal SERVER.")
-            message = managementServerMessage(message)
+            message = management_server_message(message)
             routerServerSide.send(util.serializeClass(message))
         except OSError:
             break
 
 
-def createConnectionWithServer():
+def create_connection_with_server():
     routerServerSide.connect(util.getServerSocket())
-    Thread(target=reciveMessageFromServer).start()
+    Thread(target=recive_message_from_server).start()
 
 
-def createConnectionWithClients():
+def recive_message_from_client(client):
+    while True:
+        try:
+            message = client.recv(util.getDefaultBufferSize())
+            routerServerSide.send(message)
+        except Exception as e:
+            break
+
+
+def create_connection_with_clients():
     routerClientSide.listen(5)
     while True:
         client, address = routerClientSide.accept()
         print("%s:%s si è collegato." % address)
+        Thread(target=recive_message_from_client, args=(client,)).start()
 
 
 def main():
+    global macClientSide, macServerSide
     macServerSide = input('Inserire il MAC Address dell\'interfaccia lato SERVER: ')
     macClientSide = input('Inserire il MAC Address dell\'interfaccia lato CLIENT: ')
-    createConnectionWithServer()
-    createConnectionWithClients()
+    create_connection_with_server()
+    create_connection_with_clients()
 
 
 if __name__ == "__main__":

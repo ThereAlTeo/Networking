@@ -13,6 +13,10 @@ entitySocketName = {}
 socketNameDictionary = {}
 # Dizionario che contiene key=indirizzo pubblico della rete Value=socket del router da cui è gestita
 routerNetwork = {}
+# Dizionario che contiene key=indirizzo lato server del router Value= indirizzo pubblico della rete
+routerInterfaceIP = {}
+# Dizionario che contiene Key=indirizzo lato server Value= lista di client all'iterno della rete
+clientInsideNetwork = {}
 routerConnected = 1
 SERVER = None
 serverMacAddress = "52:AB:0A:DF:10:DC"
@@ -40,17 +44,20 @@ def prepare_for_next_message(message: Message):
     message.source_ip = serverIPAddress
 
 
-def generate_server_ip():
+def generate_server_ip(publicnetwork: str):
     global routerConnected
     if routerConnected == 9:
         routerConnected = 11
     elif routerConnected >= 254:
         raise Exception("Non è possibile aggiungere nuovi router")
     routerConnected += 1
-    return "195.1.10." + routerConnected
+    serverSideIP = "195.1.10." + routerConnected
+    routerInterfaceIP[serverSideIP] = publicnetwork
+    clientInsideNetwork[serverSideIP] = []
+    return serverSideIP
 
 
-def generate_client_ip(content, client):
+def generate_client_ip(content: str, client):
     socketNameDictionary[client] = content.split(":")[1]
     publicNetwork = ""
     while True:
@@ -67,7 +74,8 @@ def create_router_ips(message: Message, client):
     print(content)
     prepare_for_next_message(message)
     message.message_type = MessageType.DHCP_ROUTER_ACK
-    message.text = "ServerIP:" + generate_server_ip() + "\nClienIP:" + generate_client_ip(content, client)
+    publicnetwork = generate_client_ip(content, client)
+    message.text = "ServerIP:" + generate_server_ip(publicnetwork) + "\nClienIP:" + publicnetwork
     return message
 
 
