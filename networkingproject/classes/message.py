@@ -16,6 +16,7 @@ class MessageType(Enum):
     ROUTER_LIST_RESPONSE = 8
     ROUTER_LIST_EMPTY = 9
     WELCOME = 10
+    CLIENT_EXIT = 11
 
 
 class Message:
@@ -43,6 +44,10 @@ class Message:
         self.destination_ip = destination_ip
         self.message_type = message_type
         self.text = text
+
+    @classmethod
+    def empty(cls):
+        return cls("", "", "", "", MessageType.NONE, "")
 
     def prepare_for_next_message(self):
         self.destination_ip = self.source_ip

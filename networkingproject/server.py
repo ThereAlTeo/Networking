@@ -28,7 +28,7 @@ def accept_incoming_client():
         print("Attendo prossima connessione ...")
         client, clientAddress = SERVER.accept()
         print("Benvenuto %s:%s !" % clientAddress)
-        message = Message()
+        message = Message.empty()
         message.source_mac = serverMacAddress
         message.source_ip = serverIPAddress
         message.message_type = MessageType.WELCOME
