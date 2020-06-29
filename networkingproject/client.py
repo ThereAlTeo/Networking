@@ -1,10 +1,15 @@
 from socket import AF_INET, socket, SOCK_STREAM
+from threading import Thread
+from classes.message import Message, MessageType
+from utilities import Utilities
+import sys
 
 
 class Client:
     """
     Client that connects to the server by the given IP then switches it's socket to a Router
     """
+
     def __init__(self, target_ip: str, target_port: str):
         """
         Init the Client that targets the server for a connection
@@ -13,21 +18,57 @@ class Client:
         target_ip: str
         target_port: str
         """
-        self.target_ip = target_ip
-        self.target_port = target_port
+        self.sock = socket(AF_INET, SOCK_STREAM)
+        self.sock.connect((target_ip, target_port))
+        self.receive_thread = Thread(target=self.receive)
+        self.receive_thread.start()
 
-    def connect(self):
+    def handle_startup(self):
         """
-        Connect the Client to a Socket with the ip and port given in the constructor.
+        At the Welcome message, find the available subnets, picking the router given by the server.
         """
-        sock = socket(AF_INET, SOCK_STREAM)
-        sock.connect((self.target_ip, self.target_port))
+        print("Finding Available Subnets...")
+        message = Message.empty()
+        message.message_type = MessageType.ROUTER_LIST_REQUEST
+        self.sock.send(Utilities.serializeClass(message))
+        message = Utilities.deserializeClass(self.sock.recv(Utilities.getDefaultBufferSize()))
+        if message.message_type == MessageType.ROUTER_LIST_EMPTY:
+            print('No router found on server')
+            self.exit()
+        if message.message_type == MessageType.ROUTER_LIST_RESPONSE:
+            print('Printing all the Routers Available')
+            print(message.text)
 
-    def __str__(self):
+    def receive(self):
         """
-        Return the Object in String format.
-        Returns
-        -------
-        str
+        Start a Thread that filters the requests received and manages the Messages received
         """
-        return "IP: " + self.target_ip + "\tPort: " + str(self.target_port)
+        while True:
+            try:
+                message = Utilities.deserializeClass(self.sock.recv(Utilities.getDefaultBufferSize()))
+                switcher = {
+                    MessageType.WELCOME: self.handle_startup
+                }
+                switcher.get(message.message_type, self.exit())()
+            except Exception as e:
+                print(e)
+                break
+
+    def exit(self):
+        """
+        Exit the client gracefully, closing everything.
+        """
+        print("Shutting down the client...")
+        message = Message.empty()
+        message.message_type = MessageType.WELCOME
+        self.sock.send(Utilities.serializeClass(message))
+        self.sock.close()
+        sys.exit(0)
+
+
+def __main__():
+    Client(Utilities.hostIP, Utilities.hostPort)
+
+
+if __name__ == "__main__":
+    __main__()
