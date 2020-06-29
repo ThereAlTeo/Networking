@@ -61,7 +61,7 @@ def generate_client_ip(content: str, client):
     socketNameDictionary[client] = content.split(":")[1]
     publicNetwork = ""
     while True:
-        publicNetwork = random.randint(1, 92) + random.randint(1, 10) + "10.1"
+        publicNetwork = str(random.randint(1, 92)) + str(random.randint(1, 10)) + "10.1"
         if not (publicNetwork in routerNetwork):
             break
     routerNetwork[publicNetwork] = client

@@ -49,7 +49,7 @@ class Client:
                 switcher = {
                     MessageType.WELCOME: self.handle_startup
                 }
-                switcher.get(message.message_type, self.exit())()
+                switcher.get(message.message_type)()
             except Exception as e:
                 print(e)
                 break

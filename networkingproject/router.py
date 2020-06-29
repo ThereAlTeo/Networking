@@ -23,11 +23,11 @@ routerClientSide = socket(AF_INET, SOCK_STREAM)
 
 def welcome_type(message):
     print("Il SERVER ha dato il Benvenuto!")
-    message.prepareForNextMessage()
+    message.prepare_for_next_message()
     message.source_ip = "255.255.255.255"
     message.source_mac = macServerSide
     message.message_type = MessageType.DHCP_ROUTER_REQUEST
-    message.text = "MyClientSocketName:" + routerClientSide.getsockname() + "\n"
+    message.text = "MyClientSocketName: " + routerClientSide.getsockname()[0] + "\n"
     return message
 
 
@@ -36,7 +36,7 @@ def router_interface_ip(message):
     print("Il SERVER ha restituito gli indirizzi IP delle interfacce lato client e server!")
     content = message.text
     print(content)
-    message.prepareForNextMessage()
+    message.prepare_for_next_message()
     message.message_type = MessageType.NONE
     ipServerSide = content.split("\n")[0].split(":")[1]
     ipClientSide = content.split("\n")[1].split(":")[1]
@@ -50,7 +50,7 @@ def management_server_message(message):
         MessageType.DHCP_REQUEST: welcome_type,
         MessageType.ROUTER_LIST_REQUEST: welcome_type,
     }
-    return switcher.get(message.messageType)(message)
+    return switcher.get(message.message_type)(message)
 
 
 def recive_message_from_server():
