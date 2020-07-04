@@ -17,6 +17,9 @@ class MessageType(Enum):
     ROUTER_LIST_EMPTY = 9
     WELCOME = 10
     CLIENT_EXIT = 11
+    CLIENT_SEND_MESSAGE = 12
+    CLIENT_RECEIVE_MESSAGE = 13
+    CLIENT_NOT_FOUND = 14
 
 
 class Message:

@@ -27,7 +27,7 @@ def welcome_type(message):
     message.source_ip = "255.255.255.255"
     message.source_mac = macServerSide
     message.message_type = MessageType.DHCP_ROUTER_REQUEST
-    message.text = "MyClientSocketName: " + routerClientSide.getsockname()[0] + "\n"
+    message.text = "MyClientSocketName: " + routerClientSide.getsockname() + "\n"
     return message
 
 
@@ -59,7 +59,13 @@ def recive_message_from_server():
             message = util.deserializeClass(routerServerSide.recv(util.getDefaultBufferSize()))
             print("E' arrivato un messaggio dal SERVER.")
             message = management_server_message(message)
-            routerServerSide.send(util.serializeClass(message))
+            if message.message_type == MessageType.DHCP_ACK or message.message_type == MessageType.DHCP_OFFER:
+                for state in clientIpSocket.values():
+                    state.send(util.serializeClass(message))
+            elif message.message_type == MessageType.CLIENT_RECEIVE_MESSAGE or message.message_type == MessageType.CLIENT_NOT_FOUND:
+                clientIpSocket[message.source_ip].send(util.serializeClass(message))
+            else:
+                routerServerSide.send(util.serializeClass(message))
         except OSError:
             break
 

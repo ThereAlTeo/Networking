@@ -7,16 +7,15 @@ from threading import Thread
 from classes.message import Message, MessageType
 from utilities import Utilities as util
 
-# Dizionario per entità generica in ingresso Key=socket Value=socketName
-entitySocketName = {}
-# Dizionario che contiene Key=socket del router Value=socketName del router
-socketNameDictionary = {}
-# Dizionario che contiene key=indirizzo pubblico della rete Value=socket del router da cui è gestita
-routerNetwork = {}
-# Dizionario che contiene key=indirizzo lato server del router Value= indirizzo pubblico della rete
+"Dizionario che continene Key=IndiizzoIP pubblico del router Value=socketName alla quale i client devono collegarsi"
+routerSocketName = {}
+"Dizionario che continene Key=socket diretta verso router Value=IndirizzoIP pubblico del router"
+routerIP = {}
+"Dizionario che continene Key=socket diretta verso router Value=IndirizzoIP pubblico del router"
+routerIP = {}
+"Dizionario che contiene key=indirizzo lato client router Value=indirizzo lato server router. PROBABILMENTE INUTILE"
 routerInterfaceIP = {}
-# Dizionario che contiene Key=indirizzo lato server Value= lista di client all'iterno della rete
-clientInsideNetwork = {}
+
 routerConnected = 1
 SERVER = None
 serverMacAddress = "52:AB:0A:DF:10:DC"
@@ -34,11 +33,10 @@ def accept_incoming_client():
         message.message_type = MessageType.WELCOME
 
         client.send(util.serializeClass(message))
-        entitySocketName[client] = clientAddress
         Thread(target=client_management, args=(client,)).start()
 
-
-def prepare_for_next_message(message: Message):
+"TODO: Ripensare al nome e all'operato della funzione"
+def prepare_for_next_message_to_client(message: Message):
     message.prepare_for_next_message()
     message.source_mac = serverMacAddress
     message.source_ip = serverIPAddress
@@ -52,27 +50,27 @@ def generate_server_ip(publicnetwork: str):
         raise Exception("Non è possibile aggiungere nuovi router")
     routerConnected += 1
     serverSideIP = "195.1.10." + routerConnected
-    routerInterfaceIP[serverSideIP] = publicnetwork
-    clientInsideNetwork[serverSideIP] = []
+    routerInterfaceIP[publicnetwork] = serverSideIP
     return serverSideIP
 
 
 def generate_client_ip(content: str, client):
-    socketNameDictionary[client] = content.split(":")[1]
     publicNetwork = ""
     while True:
         publicNetwork = str(random.randint(1, 92)) + str(random.randint(1, 10)) + "10.1"
-        if not (publicNetwork in routerNetwork):
+        if not (publicNetwork in routerSocketName):
             break
-    routerNetwork[publicNetwork] = client
+    routerSocketName[publicNetwork] = content.split(":")[1]
+    routerIP[client] = publicNetwork
+
     return publicNetwork
 
 
 def create_router_ips(message: Message, client):
-    print("Il SERVER sta generando gli indirizzi IP per %s:%s" % entitySocketName[client])
+    print("Il SERVER sta generando gli indirizzi IP per %s:%s" % client.getsockname())
     content = message.text
     print(content)
-    prepare_for_next_message(message)
+    prepare_for_next_message_to_client(message)
     message.message_type = MessageType.DHCP_ROUTER_ACK
     publicnetwork = generate_client_ip(content, client)
     message.text = "ServerIP:" + generate_server_ip(publicnetwork) + "\nClienIP:" + publicnetwork
@@ -83,21 +81,62 @@ def create_router_list(message: Message, client):
     print("Il SERVER sta restituendo il nome delle reti disponibili")
     content = message.text
     print(content)
-    prepare_for_next_message(message)
-    if len(routerNetwork) > 0:
+    prepare_for_next_message_to_client(message)
+    message.message_type = MessageType.DHCP_OFFER
+    if len(routerSocketName) > 0:
         message.message_type = MessageType.ROUTER_LIST_RESPONSE
-        message.text = "NetworkNames:" + "-".join(list(routerNetwork.keys()))
+        routerSocketNameList = [key + "-" + routerSocketName[key] for key in routerSocketName]
+        message.text = "NetworkNames:" + "-".join(routerSocketNameList)
     else:
         message.message_type = MessageType.ROUTER_LIST_EMPTY
+    return message
+
+
+def offer_ip_to_client(message: Message, client):
+    print("Il SERVER offre un indirizzo IP relativo alla sottorete scelta")
+    content = message.text
+    print(content)
+    prepare_for_next_message_to_client(message)
+    message.message_type = MessageType.DHCP_ACK
+
+    return message
+
+
+def ack_ip_to_client(message: Message, client):
+    print("Il SERVER conferma l'indirizzo IP al client")
+    content = message.text
+    print(content)
+
+    return message
+
+
+def client_send_message(message: Message, client):
+    print("Il SERVER riceve notifica da parte del client, il quale vorrebbe inviare un messaggio")
+
+    #if
+
+    content = message.text
+    print(content)
+
+    return message
+
+
+def client_exit(message: Message, client):
+    print("Il SERVER riceve uscita da parte di client")
+    content = message.text
+    print(content)
+    prepare_for_next_message_to_client(message)
+
     return message
 
 
 def server_action(message: Message, client):
     switcher = {
         MessageType.DHCP_ROUTER_REQUEST: create_router_ips,
-        MessageType.DHCP_DISCOVER: create_router_ips,
-        MessageType.DHCP_REQUEST: create_router_ips,
+        MessageType.DHCP_DISCOVER: offer_ip_to_client,
+        MessageType.DHCP_REQUEST: ack_ip_to_client,
         MessageType.ROUTER_LIST_REQUEST: create_router_list,
+        MessageType.CLIENT_SEND_MESSAGE: client_send_message,
     }
     return switcher.get(message.message_type)(message, client)
 
@@ -106,8 +145,13 @@ def client_management(client):
     while True:
         try:
             message = util.deserializeClass(client.recv(util.getDefaultBufferSize()))
-            message = server_action(message, client)
-            client.send(util.serializeClass(message))
+            if message.message_type == MessageType.CLIENT_EXIT:
+                client_exit(message, client)
+            elif message.message_type == MessageType.CLIENT_SEND_MESSAGE:
+                client_send_message(message, client)
+            else:
+                message = server_action(message, client)
+                client.send(util.serializeClass(message))
         except Exception as e:
             break
 
