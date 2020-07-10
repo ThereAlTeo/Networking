@@ -11,8 +11,9 @@ from utilities import Utilities as util
 routerSocketName = {}
 "Dizionario che continene Key=socket diretta verso router Value=IndirizzoIP pubblico del router"
 routerIP = {}
-"Dizionario che continene Key=socket diretta verso router Value=IndirizzoIP pubblico del router"
-routerIP = {}
+"Dizionario che continene Key=socket del router Value=lista di indirizzi IP connessi"
+clientConnectedInRouter = {}
+
 "Dizionario che contiene key=indirizzo lato client router Value=indirizzo lato server router. PROBABILMENTE INUTILE"
 routerInterfaceIP = {}
 
@@ -62,7 +63,7 @@ def generate_client_ip(content: str, client):
             break
     routerSocketName[publicNetwork] = content.split(":")[1]
     routerIP[client] = publicNetwork
-
+    clientConnectedInRouter[client] = []
     return publicNetwork
 
 
@@ -92,21 +93,16 @@ def create_router_list(message: Message, client):
     return message
 
 
-def offer_ip_to_client(message: Message, client):
+def ack_ip_to_client(message: Message, client):
     print("Il SERVER offre un indirizzo IP relativo alla sottorete scelta")
     content = message.text
     print(content)
     prepare_for_next_message_to_client(message)
     message.message_type = MessageType.DHCP_ACK
-
-    return message
-
-
-def ack_ip_to_client(message: Message, client):
-    print("Il SERVER conferma l'indirizzo IP al client")
-    content = message.text
-    print(content)
-
+    ipAddressNetwork = routerIP[client].split(".")
+    ipAddressACK = ".".join(ipAddressNetwork[:3]) + str(len(clientConnectedInRouter[client]) + 2)
+    clientConnectedInRouter[client].append(ipAddressACK)
+    message.text += ", " + ipAddressACK
     return message
 
 
@@ -133,7 +129,6 @@ def client_exit(message: Message, client):
 def server_action(message: Message, client):
     switcher = {
         MessageType.DHCP_ROUTER_REQUEST: create_router_ips,
-        MessageType.DHCP_DISCOVER: offer_ip_to_client,
         MessageType.DHCP_REQUEST: ack_ip_to_client,
         MessageType.ROUTER_LIST_REQUEST: create_router_list,
         MessageType.CLIENT_SEND_MESSAGE: client_send_message,

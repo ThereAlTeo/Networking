@@ -8,8 +8,8 @@ from threading import Thread
 
 # Dizionario che continene Key=IndirizzoIP Value=socket
 clientIpSocket = {}
-#Dizionario che contine Key=IndirizzoIP Value=IndirizzoMac
-clientMacSocket = {}
+#Lista che mi contiene tutte le socket dei client
+broadcastMessage = []
 
 macServerSide = ''
 ipServerSide = ''
@@ -59,11 +59,11 @@ def recive_message_from_server():
             message = util.deserializeClass(routerServerSide.recv(util.getDefaultBufferSize()))
             print("E' arrivato un messaggio dal SERVER.")
             message = management_server_message(message)
-            if message.message_type == MessageType.DHCP_ACK or message.message_type == MessageType.DHCP_OFFER:
-                for state in clientIpSocket.values():
+            if message.message_type == MessageType.DHCP_ACK:
+                for state in broadcastMessage:
                     state.send(util.serializeClass(message))
             elif message.message_type == MessageType.CLIENT_RECEIVE_MESSAGE or message.message_type == MessageType.CLIENT_NOT_FOUND:
-                clientIpSocket[message.source_ip].send(util.serializeClass(message))
+                clientIpSocket[message.destination_ip].send(util.serializeClass(message))
             else:
                 routerServerSide.send(util.serializeClass(message))
         except OSError:
@@ -90,6 +90,7 @@ def create_connection_with_clients():
     while True:
         client, address = routerClientSide.accept()
         print("%s:%s si è collegato." % address)
+        broadcastMessage.append(client)
         Thread(target=recive_message_from_client, args=(client,)).start()
 
 
