@@ -60,6 +60,7 @@ def generate_client_ip(content: str, client):
         publicNetwork = str(random.randint(1, 92)) + str(random.randint(1, 10)) + "10.1"
         if not (publicNetwork in routerSocketName):
             break
+    print(content.split(":")[1])
     routerSocketName[publicNetwork] = content.split(":")[1]
     routerIP[client] = publicNetwork
 
@@ -152,6 +153,9 @@ def client_management(client):
             else:
                 message = server_action(message, client)
                 client.send(util.serializeClass(message))
+                if message.message_type == MessageType.ROUTER_LIST_RESPONSE:
+                    client.close()
+                    break
         except Exception as e:
             break
 
