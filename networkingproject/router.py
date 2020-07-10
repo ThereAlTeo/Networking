@@ -79,7 +79,10 @@ def recive_message_from_client(client):
     while True:
         try:
             message = client.recv(util.getDefaultBufferSize())
-            routerServerSide.send(message)
+            if message.message_type == MessageType.CLIENT_IDENTIFY:
+                clientIpSocket[message.source_ip] = client
+            else:
+                routerServerSide.send(message)
         except Exception as e:
             break
 

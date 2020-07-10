@@ -108,13 +108,16 @@ def ack_ip_to_client(message: Message, client):
 
 def client_send_message(message: Message, client):
     print("Il SERVER riceve notifica da parte del client, il quale vorrebbe inviare un messaggio")
-
-    #if
-
     content = message.text
     print(content)
 
-    return message
+    for router in clientConnectedInRouter:
+        if content in clientConnectedInRouter[router]:
+            router.send(message)
+
+    message.message_type = MessageType.CLIENT_NOT_FOUND
+    #TODO: invertire ip sorgente e destinazione
+    client.send(message)
 
 
 def client_exit(message: Message, client):
@@ -131,7 +134,6 @@ def server_action(message: Message, client):
         MessageType.DHCP_ROUTER_REQUEST: create_router_ips,
         MessageType.DHCP_REQUEST: ack_ip_to_client,
         MessageType.ROUTER_LIST_REQUEST: create_router_list,
-        MessageType.CLIENT_SEND_MESSAGE: client_send_message,
     }
     return switcher.get(message.message_type)(message, client)
 

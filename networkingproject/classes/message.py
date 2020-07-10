@@ -18,6 +18,7 @@ class MessageType(Enum):
     CLIENT_SEND_MESSAGE = 10
     CLIENT_RECEIVE_MESSAGE = 11
     CLIENT_NOT_FOUND = 12
+    CLIENT_IDENTIFY = 13
 
 
 class Message:
