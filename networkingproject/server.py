@@ -100,9 +100,9 @@ def ack_ip_to_client(message: Message, client):
     prepare_for_next_message_to_client(message)
     message.message_type = MessageType.DHCP_ACK
     ipAddressNetwork = routerIP[client].split(".")
-    ipAddressACK = ".".join(ipAddressNetwork[:3]) + str(len(clientConnectedInRouter[client]) + 2)
+    ipAddressACK = ".".join(ipAddressNetwork[:3]) + "." + str(len(clientConnectedInRouter[client]) + 2)
     clientConnectedInRouter[client].append(ipAddressACK)
-    message.text += ", " + ipAddressACK
+    message.text = content + "," + ipAddressACK
     return message
 
 
