@@ -1,4 +1,4 @@
-from socket import AF_INET, socket, SOCK_STREAM
+from socket import AF_INET, socket, SOCK_STREAM, SHUT_RDWR
 from threading import Thread
 from classes.message import Message, MessageType
 from utilities import Utilities
@@ -18,6 +18,7 @@ class Client:
         target_ip: str
         target_port: str
         """
+        self.ip = ""
         self.sock = socket(AF_INET, SOCK_STREAM)
         self.sock.connect((target_ip, target_port))
         self.receive_thread = Thread(target=self.receive)
@@ -36,8 +37,21 @@ class Client:
             print('No router found on server')
             self.exit()
         if message.message_type == MessageType.ROUTER_LIST_RESPONSE:
-            print('Printing all the Routers Available')
-            print(message.text)
+            connections = {}
+            for line in message.text.splitlines():
+                connections[line[:line.find('-')]] = line[line.find(',') + 1:]
+            print('Select a router to connect (type the IP):')
+            for key in connections.keys():
+                print("- " + key)
+            selection = ""
+            while selection not in connections.keys():
+                selection = input('-> ')
+            self.init_socket()
+            self.sock.connect(('127.0.0.1', int(connections[selection])))
+            message = Message.empty()
+            message.message_type = MessageType.DHCP_DISCOVER
+            self.sock.send(Utilities.serializeClass(message))
+            self.exit()
 
     def receive(self):
         """
@@ -62,8 +76,14 @@ class Client:
         message = Message.empty()
         message.message_type = MessageType.WELCOME
         self.sock.send(Utilities.serializeClass(message))
+        self.sock.shutdown(SHUT_RDWR)
         self.sock.close()
         sys.exit(0)
+
+    def init_socket(self):
+        self.sock.shutdown(SHUT_RDWR)
+        self.sock.close()
+        self.sock = socket(AF_INET, SOCK_STREAM)
 
 
 def __main__():
