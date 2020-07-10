@@ -57,7 +57,7 @@ def generate_server_ip(publicnetwork: str):
 def generate_client_ip(content: str, client):
     publicNetwork = ""
     while True:
-        publicNetwork = str(random.randint(1, 92)) + str(random.randint(1, 10)) + "10.1"
+        publicNetwork = str(random.randint(1, 92)) + '.' + str(random.randint(1, 10)) + ".10.1"
         if not (publicNetwork in routerSocketName):
             break
     print(content.split(":")[1])
@@ -87,7 +87,7 @@ def create_router_list(message: Message, client):
     if len(routerSocketName) > 0:
         message.message_type = MessageType.ROUTER_LIST_RESPONSE
         routerSocketNameList = [key + "-" + routerSocketName[key] for key in routerSocketName]
-        message.text = "NetworkNames:" + "-".join(routerSocketNameList)
+        message.text = "-".join(routerSocketNameList)
     else:
         message.message_type = MessageType.ROUTER_LIST_EMPTY
     return message

@@ -27,8 +27,7 @@ def welcome_type(message):
     message.source_ip = "255.255.255.255"
     message.source_mac = macServerSide
     message.message_type = MessageType.DHCP_ROUTER_REQUEST
-    print(routerClientSide.getsockname())
-    message.text = "MyClientSocketName:" + routerClientSide.getsockname() + "\n"
+    message.text = "MyClientSocketName: " + routerClientSide.getsockname()[0] + "," + str(routerClientSide.getsockname()[1]) + "\n"
     return message
 
 
