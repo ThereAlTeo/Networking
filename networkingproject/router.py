@@ -58,13 +58,13 @@ def recive_message_from_server():
         try:
             message = util.deserializeClass(routerServerSide.recv(util.getDefaultBufferSize()))
             print("E' arrivato un messaggio dal SERVER.")
-            message = management_server_message(message)
             if message.message_type == MessageType.DHCP_ACK:
                 for state in broadcastMessage:
                     state.send(util.serializeClass(message))
             elif message.message_type == MessageType.CLIENT_RECEIVE_MESSAGE or message.message_type == MessageType.CLIENT_NOT_FOUND:
                 clientIpSocket[message.destination_ip].send(util.serializeClass(message))
             else:
+                message = management_server_message(message)
                 routerServerSide.send(util.serializeClass(message))
         except OSError:
             break
