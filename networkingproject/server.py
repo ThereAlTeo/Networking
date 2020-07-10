@@ -36,7 +36,10 @@ def accept_incoming_client():
         client.send(util.serializeClass(message))
         Thread(target=client_management, args=(client,)).start()
 
+
 "TODO: Ripensare al nome e all'operato della funzione"
+
+
 def prepare_for_next_message_to_client(message: Message):
     message.prepare_for_next_message()
     message.source_mac = serverMacAddress
@@ -83,7 +86,6 @@ def create_router_list(message: Message, client):
     content = message.text
     print(content)
     prepare_for_next_message_to_client(message)
-    message.message_type = MessageType.DHCP_OFFER
     if len(routerSocketName) > 0:
         message.message_type = MessageType.ROUTER_LIST_RESPONSE
         routerSocketNameList = [key + "-" + routerSocketName[key] for key in routerSocketName]
@@ -124,9 +126,8 @@ def client_exit(message: Message, client):
     print("Il SERVER riceve uscita da parte di client")
     content = message.text
     print(content)
-    prepare_for_next_message_to_client(message)
-
-    return message
+    clientConnectedInRouter[client].remove(message.source_ip)
+    return message.empty()
 
 
 def server_action(message: Message, client):
