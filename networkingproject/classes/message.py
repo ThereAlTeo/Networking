@@ -6,20 +6,18 @@ class MessageType(Enum):
     Simple Enum that holds all the various types of Message that can be sent.
     """
     NONE = 0
-    DHCP_DISCOVER = 1
-    DHCP_OFFER = 2
-    DHCP_REQUEST = 3
-    DHCP_ROUTER_REQUEST = 4
-    DHCP_ACK = 5
-    DHCP_ROUTER_ACK = 6
-    ROUTER_LIST_REQUEST = 7
-    ROUTER_LIST_RESPONSE = 8
-    ROUTER_LIST_EMPTY = 9
-    WELCOME = 10
-    CLIENT_EXIT = 11
-    CLIENT_SEND_MESSAGE = 12
-    CLIENT_RECEIVE_MESSAGE = 13
-    CLIENT_NOT_FOUND = 14
+    DHCP_REQUEST = 1
+    DHCP_ROUTER_REQUEST = 2
+    DHCP_ACK = 3
+    DHCP_ROUTER_ACK = 4
+    ROUTER_LIST_REQUEST = 5
+    ROUTER_LIST_RESPONSE = 6
+    ROUTER_LIST_EMPTY = 7
+    WELCOME = 8
+    CLIENT_EXIT = 9
+    CLIENT_SEND_MESSAGE = 10
+    CLIENT_RECEIVE_MESSAGE = 11
+    CLIENT_NOT_FOUND = 12
 
 
 class Message:
