@@ -85,6 +85,7 @@ def recive_message_from_client(client):
 
 
 def create_connection_with_clients():
+    util.set_default_socket(routerClientSide)
     routerClientSide.listen(5)
     while True:
         client, address = routerClientSide.accept()

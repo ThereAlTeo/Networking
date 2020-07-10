@@ -16,7 +16,7 @@ routerIP = {}
 "Dizionario che contiene key=indirizzo lato client router Value=indirizzo lato server router. PROBABILMENTE INUTILE"
 routerInterfaceIP = {}
 
-routerConnected = 1
+routerConnected = 0
 SERVER = None
 serverMacAddress = "52:AB:0A:DF:10:DC"
 serverIPAddress = "195.1.10.10"
@@ -49,7 +49,7 @@ def generate_server_ip(publicnetwork: str):
     elif routerConnected >= 254:
         raise Exception("Non è possibile aggiungere nuovi router")
     routerConnected += 1
-    serverSideIP = "195.1.10." + routerConnected
+    serverSideIP = "195.1.10." + str(routerConnected)
     routerInterfaceIP[publicnetwork] = serverSideIP
     return serverSideIP
 
@@ -60,7 +60,6 @@ def generate_client_ip(content: str, client):
         publicNetwork = str(random.randint(1, 92)) + '.' + str(random.randint(1, 10)) + ".10.1"
         if not (publicNetwork in routerSocketName):
             break
-    print(content.split(":")[1])
     routerSocketName[publicNetwork] = content.split(":")[1]
     routerIP[client] = publicNetwork
 
@@ -146,11 +145,12 @@ def client_management(client):
     while True:
         try:
             message = util.deserializeClass(client.recv(util.getDefaultBufferSize()))
+            print(message.message_type)
             if message.message_type == MessageType.CLIENT_EXIT:
                 client_exit(message, client)
             elif message.message_type == MessageType.CLIENT_SEND_MESSAGE:
                 client_send_message(message, client)
-            else:
+            elif message.message_type != MessageType.NONE:
                 message = server_action(message, client)
                 client.send(util.serializeClass(message))
                 if message.message_type == MessageType.ROUTER_LIST_RESPONSE:
