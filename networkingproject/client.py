@@ -27,7 +27,7 @@ class Client:
         receive_thread = Thread(target=self.receive)
         receive_thread.start()
 
-    def handle_startup(self, message: Message):
+    def handle_startup(self):
         """
         At the Welcome message, find the available subnets, picking the router given by the server.
         """
