@@ -140,7 +140,12 @@ def create_client_list(message: Message, client: socket):
     message.source_ip = serverIPAddress
     message.source_mac = serverMacAddress
     message.message_type = MessageType.CLIENT_LIST_RESPONSE
-    message.text = "-".join(list(clientConnectedInRouter.keys()))
+    clientList = []
+    for router in clientConnectedInRouter:
+        for item in clientConnectedInRouter[router]:
+            clientList.append(item)
+
+    message.text = "-".join(clientList)
     return message
 
 
