@@ -20,6 +20,7 @@ class Client:
         target_port: str
         """
         self.ip = ""
+        self.received_message = Message.empty()
         self.id = str(datetime.now().timestamp())
         self.sock = socket(AF_INET, SOCK_STREAM)
         self.sock.connect((target_ip, target_port))
@@ -30,6 +31,10 @@ class Client:
         """
         At the Welcome message, find the available subnets, picking the router given by the server.
         """
+        self.select_router()
+        self.await_for_ip()
+
+    def select_router(self):
         print("Finding Available Subnets...")
         message = Message.empty()
         message.message_type = MessageType.ROUTER_LIST_REQUEST
@@ -53,8 +58,6 @@ class Client:
         message.message_type = MessageType.DHCP_REQUEST
         message.text = self.id
         self.sock.send(Utilities.serializeClass(message))
-        self.await_for_ip()
-        self.exit()
 
     def await_for_ip(self):
         """
@@ -64,6 +67,10 @@ class Client:
             message = Utilities.deserializeClass(self.sock.recv(Utilities.getDefaultBufferSize()))
             if message.text[:message.text.find(',')] == self.id and message.message_type == MessageType.DHCP_ACK:
                 self.ip = message.text[message.text.find(',') + 1:]
+                message = Message.empty()
+                message.source_ip = self.ip
+                message.message_type = MessageType.CLIENT_IDENTIFY
+                self.sock.send(Utilities.serializeClass(message))
                 break
         # self.id_to_router()
 
@@ -82,14 +89,26 @@ class Client:
         """
         while True:
             try:
-                message = Utilities.deserializeClass(self.sock.recv(Utilities.getDefaultBufferSize()))
+                self.received_message = Utilities.deserializeClass(self.sock.recv(Utilities.getDefaultBufferSize()))
                 switcher = {
-                    MessageType.WELCOME: self.handle_startup
+                    MessageType.WELCOME: self.handle_startup,
+                    MessageType.CLIENT_SEND_MESSAGE: self.handle_incoming,
+                    MessageType.CLIENT_NOT_FOUND: self.handle_incoming
                 }
-                switcher.get(message.message_type)()
+                switcher.get(self.received_message.message_type)()
             except Exception as e:
                 print(e)
                 break
+
+    def handle_incoming(self):
+        """
+        Handle the incoming message, received before the callback to function.
+        """
+        if self.received_message.message_type == MessageType.CLIENT_NOT_FOUND:
+            print("The destination client seems offline.")
+        else:
+            print("Received Message from: " + self.received_message.source_ip)
+            print(self.received_message.text)
 
     def exit(self):
         """

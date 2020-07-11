@@ -79,11 +79,11 @@ def create_connection_with_server():
 def recive_message_from_client(client):
     while True:
         try:
-            message = client.recv(util.getDefaultBufferSize())
+            message = util.deserializeClass(client.recv(util.getDefaultBufferSize()))
             if message.message_type == MessageType.CLIENT_IDENTIFY:
                 clientIpSocket[message.source_ip] = client
             else:
-                routerServerSide.send(message)
+                routerServerSide.send(util.serializeClass(message))
         except Exception as e:
             break
 
