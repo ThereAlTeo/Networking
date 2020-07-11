@@ -61,7 +61,8 @@ def recive_message_from_server():
             if message.message_type == MessageType.DHCP_ACK:
                 for state in broadcastMessage:
                     state.send(util.serializeClass(message))
-            elif message.message_type == MessageType.CLIENT_RECEIVE_MESSAGE or message.message_type == MessageType.CLIENT_NOT_FOUND:
+            elif message.message_type == MessageType.CLIENT_RECEIVE_MESSAGE or message.message_type == MessageType.CLIENT_NOT_FOUND or \
+                 message.message_type == MessageType.CLIENT_LIST_RESPONSE:
                 clientIpSocket[message.destination_ip].send(util.serializeClass(message))
             else:
                 message = management_server_message(message)

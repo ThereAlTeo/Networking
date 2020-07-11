@@ -58,7 +58,7 @@ def generate_server_ip(publicnetwork: str):
     return serverSideIP
 
 
-def generate_client_ip(content: str, client):
+def generate_client_ip(content: str, client: socket):
     publicNetwork = ""
     while True:
         publicNetwork = str(random.randint(1, 92)) + '.' + str(random.randint(1, 10)) + ".10.1"
@@ -70,7 +70,7 @@ def generate_client_ip(content: str, client):
     return publicNetwork
 
 
-def create_router_ips(message: Message, client):
+def create_router_ips(message: Message, client: socket):
     print("Il SERVER sta generando gli indirizzi IP per %s:%s" % client.getsockname())
     content = message.text
     print(content)
@@ -81,7 +81,7 @@ def create_router_ips(message: Message, client):
     return message
 
 
-def create_router_list(message: Message, client):
+def create_router_list(message: Message, client: socket):
     print("Il SERVER sta restituendo il nome delle reti disponibili")
     content = message.text
     print(content)
@@ -95,7 +95,7 @@ def create_router_list(message: Message, client):
     return message
 
 
-def ack_ip_to_client(message: Message, client):
+def ack_ip_to_client(message: Message, client: socket):
     print("Il SERVER offre un indirizzo IP relativo alla sottorete scelta")
     content = message.text
     print(content)
@@ -108,21 +108,26 @@ def ack_ip_to_client(message: Message, client):
     return message
 
 
-def client_send_message(message: Message, client):
+def send_message_to_router(message: Message, router: socket):
+    router.send(util.serializeClass(message))
+
+
+def client_send_message(message: Message, client: socket):
     print("Il SERVER riceve notifica da parte del client, il quale vorrebbe inviare un messaggio")
     content = message.text
     print(content)
 
     for router in clientConnectedInRouter:
         if content in clientConnectedInRouter[router]:
-            router.send(message)
+            send_message_to_router(message, router)
 
+    message.prepare_for_next_message()
     message.message_type = MessageType.CLIENT_NOT_FOUND
-    #TODO: invertire ip sorgente e destinazione
-    client.send(message)
+    message.text = content
+    send_message_to_router(message, client)
 
 
-def client_exit(message: Message, client):
+def client_exit(message: Message, client: socket):
     print("Il SERVER riceve uscita da parte di client")
     content = message.text
     print(content)
@@ -130,16 +135,26 @@ def client_exit(message: Message, client):
     return message.empty()
 
 
-def server_action(message: Message, client):
+def create_client_list(message: Message, client: socket):
+    message.prepare_for_next_message()
+    message.source_ip = serverIPAddress
+    message.source_mac = serverMacAddress
+    message.message_type = MessageType.CLIENT_LIST_RESPONSE
+    message.text = "-".join(list(clientConnectedInRouter.keys()))
+    return message
+
+
+def server_action(message: Message, client: socket):
     switcher = {
         MessageType.DHCP_ROUTER_REQUEST: create_router_ips,
         MessageType.DHCP_REQUEST: ack_ip_to_client,
         MessageType.ROUTER_LIST_REQUEST: create_router_list,
+        MessageType.CLIENT_LIST_REQUEST: create_client_list,
     }
     return switcher.get(message.message_type)(message, client)
 
 
-def client_management(client):
+def client_management(client: socket):
     while True:
         try:
             message = util.deserializeClass(client.recv(util.getDefaultBufferSize()))

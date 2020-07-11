@@ -19,6 +19,8 @@ class MessageType(Enum):
     CLIENT_RECEIVE_MESSAGE = 11
     CLIENT_NOT_FOUND = 12
     CLIENT_IDENTIFY = 13
+    CLIENT_LIST_REQUEST = 14
+    CLIENT_LIST_RESPONSE = 15
 
 
 class Message:
@@ -52,7 +54,7 @@ class Message:
         return cls("", "", "", "", MessageType.NONE, "")
 
     def prepare_for_next_message(self):
-        self.destination_ip = self.source_ip
-        self.destination_mac = self.source_mac
+        self.destination_ip, self.source_ip = self.source_ip, self.destination_ip
+        self.destination_mac, self.source_mac = self.source_mac, self.destination_mac
         self.message_type = MessageType.NONE
         self.text = ""
