@@ -31,7 +31,7 @@ class Router:
             Thread(target=self.receive_message_from_client, args=(client,)).start()
 
     def create_connection_with_server(self):
-        self.routerServerSide.connect(util.getServerSocket())
+        self.routerServerSide.connect((util.hostIP, util.hostPort))
         Thread(target=self.recive_message_from_server).start()
 
     def welcome_type(self, message: Message):
@@ -90,15 +90,6 @@ class Router:
                     self.routerServerSide.send(util.serializeClass(message))
             except Exception as e:
                 break
-
-    def create_connection_with_clients(self):
-        util.set_default_socket(self.routerClientSide)
-        self.routerClientSide.listen(5)
-        while True:
-            client, address = self.routerClientSide.accept()
-            print("%s:%s si è collegato." % address)
-            self.broadcastMessage.append(client)
-            Thread(target=self.receive_message_from_client, args=(client,)).start()
 
 
 def main():
