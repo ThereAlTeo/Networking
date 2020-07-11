@@ -129,6 +129,7 @@ class Server:
 
         for router in self.clientConnectedInRouter:
             if message.destination_ip in self.clientConnectedInRouter[router]:
+                message.message_type = MessageType.CLIENT_RECEIVE_MESSAGE
                 self.send_message_to_router(message, router)
 
         message.prepare_for_next_message()
