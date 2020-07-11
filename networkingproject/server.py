@@ -6,7 +6,6 @@ from utilities import Utilities as util
 
 
 class Server:
-
     def __init__(self, target_ip: str, target_port: str):
         self.routerConnected = 0
         self.serverMacAddress = "52:AB:0A:DF:10:DC"
@@ -20,8 +19,8 @@ class Server:
         "Dizionario che contiene key=indirizzo lato client router Value=indirizzo lato server router. PROBABILMENTE INUTILE"
         self.routerInterfaceIP = {}
         self.serverSocket = socket(AF_INET, SOCK_STREAM)
-        self.bind((target_ip, target_port))
-        self.listen(5)
+        self.serverSocket.bind((target_ip, target_port))
+        self.serverSocket.listen(5)
         ACCEPT_THREAD = Thread(target=self.accept_incoming_client)
         ACCEPT_THREAD.start()
         ACCEPT_THREAD.join()
@@ -44,7 +43,6 @@ class Server:
         while True:
             try:
                 message = util.deserializeClass(client.recv(util.getDefaultBufferSize()))
-                print(message.message_type)
                 if message.message_type == MessageType.CLIENT_EXIT:
                     self.client_exit(message, client)
                 elif message.message_type == MessageType.CLIENT_SEND_MESSAGE:
@@ -126,7 +124,6 @@ class Server:
         print("Il SERVER riceve notifica da parte del client, il quale vorrebbe inviare un messaggio")
         content = message.text
         print(content)
-
         for router in self.clientConnectedInRouter:
             if message.destination_ip in self.clientConnectedInRouter[router]:
                 message.message_type = MessageType.CLIENT_RECEIVE_MESSAGE

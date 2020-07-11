@@ -5,9 +5,7 @@ from threading import Thread
 
 
 class Router:
-
     def __init__(self):
-        global macClientSide, macServerSide
         self.macServerSide = input('Inserire il MAC Address dell\'interfaccia lato SERVER: ')
         self.macClientSide = input('Inserire il MAC Address dell\'interfaccia lato CLIENT: ')
         # Dizionario che continene Key=IndirizzoIP Value=socket
@@ -38,20 +36,19 @@ class Router:
         print("Il SERVER ha dato il Benvenuto!")
         message.prepare_for_next_message()
         message.source_ip = "255.255.255.255"
-        message.source_mac = macServerSide
+        message.source_mac = self.macServerSide
         message.message_type = MessageType.DHCP_ROUTER_REQUEST
         message.text = "MyClientSocketName: " + self.routerClientSide.getsockname()[0] + "," + str(self.routerClientSide.getsockname()[1]) + "\n"
         return message
 
     def router_interface_ip(self, message: Message):
-        global ipClientSide, ipServerSide
         print("Il SERVER ha restituito gli indirizzi IP delle interfacce lato client e server!")
         content = message.text
         print(content)
         message.prepare_for_next_message()
         message.message_type = MessageType.NONE
-        ipServerSide = content.split("\n")[0].split(":")[1]
-        ipClientSide = content.split("\n")[1].split(":")[1]
+        self.ipServerSide = content.split("\n")[0].split(":")[1]
+        self.ipClientSide = content.split("\n")[1].split(":")[1]
         return message
 
     def management_server_message(self, message: Message):
