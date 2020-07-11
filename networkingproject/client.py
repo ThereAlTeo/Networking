@@ -20,6 +20,7 @@ class Client:
         target_port: str
         """
         self.ip = ""
+        self.connected_clients = list()
         self.received_message = Message.empty()
         self.id = str(datetime.now().timestamp())
         self.sock = socket(AF_INET, SOCK_STREAM)
@@ -33,6 +34,38 @@ class Client:
         """
         self.select_router()
         self.await_for_ip()
+        self.prepare_for_messaging()
+
+    def prepare_for_messaging(self):
+        message = Message.empty()
+        message.message_type = MessageType.CLIENT_LIST_REQUEST
+        message.source_ip = self.ip
+        self.sock.send(Utilities.serializeClass(message))
+        self.connected_clients = Utilities.deserializeClass(self.sock.recv(Utilities.getDefaultBufferSize()))
+        print("Select what client do you want to talk to (q to exit): ")
+        self.connected_clients = self.connected_clients.text.split('-')
+        self.connected_clients.remove(self.ip)
+        thread = Thread(target=self.send_message)
+        thread.start()
+
+    def send_message(self):
+        while True:
+            for value in self.connected_clients:
+                print('- ' + value)
+            self.connected_clients.append('q')
+            selection = ""
+            while selection not in self.connected_clients:
+                selection = input('-> ')
+            if selection == 'q':
+                break
+            message = Message.empty()
+            message.source_ip = self.ip
+            message.destination_ip = selection
+            message.message_type = MessageType.CLIENT_SEND_MESSAGE
+            text_to_send = input('Text to send: ')
+            message.text = text_to_send
+            self.sock.send(Utilities.serializeClass(message))
+        self.exit()
 
     def select_router(self):
         print("Finding Available Subnets...")
@@ -67,20 +100,16 @@ class Client:
             message = Utilities.deserializeClass(self.sock.recv(Utilities.getDefaultBufferSize()))
             if message.text[:message.text.find(',')] == self.id and message.message_type == MessageType.DHCP_ACK:
                 self.ip = message.text[message.text.find(',') + 1:]
-                message = Message.empty()
-                message.source_ip = self.ip
-                message.message_type = MessageType.CLIENT_IDENTIFY
-                self.sock.send(Utilities.serializeClass(message))
+                self.id_to_router()
                 break
-        # self.id_to_router()
 
     def id_to_router(self):
         """
         Send a message to the now connected router, tell them your IP
         """
         message = Message.empty()
-        message.message_type = None
         message.source_ip = self.ip
+        message.message_type = MessageType.CLIENT_IDENTIFY
         self.sock.send(Utilities.serializeClass(message))
 
     def receive(self):
@@ -88,17 +117,14 @@ class Client:
         Start a Thread that filters the requests received and manages the Messages received
         """
         while True:
-            try:
-                self.received_message = Utilities.deserializeClass(self.sock.recv(Utilities.getDefaultBufferSize()))
+            self.received_message = Utilities.deserializeClass(self.sock.recv(Utilities.getDefaultBufferSize()))
+            if self.received_message.message_type != MessageType.DHCP_ACK:
                 switcher = {
                     MessageType.WELCOME: self.handle_startup,
-                    MessageType.CLIENT_SEND_MESSAGE: self.handle_incoming,
+                    MessageType.CLIENT_RECEIVE_MESSAGE: self.handle_incoming,
                     MessageType.CLIENT_NOT_FOUND: self.handle_incoming
                 }
                 switcher.get(self.received_message.message_type)()
-            except Exception as e:
-                print(e)
-                break
 
     def handle_incoming(self):
         """
