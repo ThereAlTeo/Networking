@@ -123,16 +123,20 @@ class Server:
     def client_send_message(self, message: Message, client: socket):
         print("Il SERVER riceve notifica da parte del client, il quale vorrebbe inviare un messaggio")
         content = message.text
+        isFound = True
         print(content)
         for router in self.clientConnectedInRouter:
             if message.destination_ip in self.clientConnectedInRouter[router]:
                 message.message_type = MessageType.CLIENT_RECEIVE_MESSAGE
                 self.send_message_to_router(message, router)
+                isFound = False
+                break
 
-        message.prepare_for_next_message()
-        message.message_type = MessageType.CLIENT_NOT_FOUND
-        message.text = content
-        self.send_message_to_router(message, client)
+        if isFound:
+            message.prepare_for_next_message()
+            message.message_type = MessageType.CLIENT_NOT_FOUND
+            message.text = content
+            self.send_message_to_router(message, client)
 
     def client_exit(self, message: Message, client: socket):
         print("Il SERVER riceve uscita da parte di client")
