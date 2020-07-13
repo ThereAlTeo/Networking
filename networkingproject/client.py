@@ -42,20 +42,18 @@ class Client:
         message.source_ip = self.ip
         self.sock.send(Utilities.serializeClass(message))
         self.connected_clients = Utilities.deserializeClass(self.sock.recv(Utilities.getDefaultBufferSize()))
-        print("Select what client do you want to talk to (q to exit): ")
         self.connected_clients = self.connected_clients.text.split('-')
         self.connected_clients.remove(self.ip)
         thread = Thread(target=self.send_message)
         thread.start()
 
     def send_message(self):
+        print("Clients connected now:")
+        for value in self.connected_clients:
+            print('- ' + value)
+        print("Input the IP of the client do you want to talk to (q to exit): ")
         while True:
-            for value in self.connected_clients:
-                print('- ' + value)
-            self.connected_clients.append('q')
-            selection = ""
-            while selection not in self.connected_clients:
-                selection = input('-> ')
+            selection = input('-> ')
             if selection == 'q':
                 break
             message = Message.empty()
@@ -118,20 +116,22 @@ class Client:
         """
         while True:
             self.received_message = Utilities.deserializeClass(self.sock.recv(Utilities.getDefaultBufferSize()))
-            if self.received_message.message_type != MessageType.DHCP_ACK:
+            try:
                 switcher = {
                     MessageType.WELCOME: self.handle_startup,
                     MessageType.CLIENT_RECEIVE_MESSAGE: self.handle_incoming,
                     MessageType.CLIENT_NOT_FOUND: self.handle_incoming
                 }
                 switcher.get(self.received_message.message_type)()
+            except:
+                pass
 
     def handle_incoming(self):
         """
         Handle the incoming message, received before the callback to function.
         """
         if self.received_message.message_type == MessageType.CLIENT_NOT_FOUND:
-            print("The destination client seems offline.")
+            print("Received Message from Server: The destination client seems offline.")
         else:
             print("Received Message from: " + self.received_message.source_ip)
             print(self.received_message.text)
