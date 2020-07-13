@@ -1,4 +1,6 @@
 import random
+import signal
+import sys
 from socket import AF_INET, socket, SOCK_STREAM
 from threading import Thread
 from classes.message import Message, MessageType
@@ -25,6 +27,17 @@ class Server:
         ACCEPT_THREAD.start()
         ACCEPT_THREAD.join()
         self.serverSocket.close()
+        signal.signal(signal.SIGINT, self.exit)
+        signal.signal(signal.SIGQUIT, self.exit)
+
+    def exit(self, signum, frame):
+        print("Uscita dallo script")
+        try:
+            self.serverSocket.close()
+        except:
+            print("Errore nella chiusa dei socket")
+        finally:
+            sys.exit(0)
 
     def accept_incoming_client(self):
         while True:
@@ -85,7 +98,6 @@ class Server:
     def create_router_ips(self, message: Message, client: socket):
         print("Il SERVER sta generando gli indirizzi IP per %s:%s" % client.getsockname())
         content = message.text
-        print(content)
         self.prepare_for_next_message_to_client(message)
         message.message_type = MessageType.DHCP_ROUTER_ACK
         publicnetwork = self.generate_client_ip(content, client)
@@ -95,7 +107,6 @@ class Server:
     def create_router_list(self, message: Message, client: socket):
         print("Il SERVER sta restituendo il nome delle reti disponibili")
         content = message.text
-        print(content)
         self.prepare_for_next_message_to_client(message)
         if len(self.routerSocketName) > 0:
             message.message_type = MessageType.ROUTER_LIST_RESPONSE
@@ -108,7 +119,6 @@ class Server:
     def ack_ip_to_client(self, message: Message, client: socket):
         print("Il SERVER offre un indirizzo IP relativo alla sottorete scelta")
         content = message.text
-        print(content)
         self.prepare_for_next_message_to_client(message)
         message.message_type = MessageType.DHCP_ACK
         ipAddressNetwork = self.routerIP[client].split(".")
@@ -124,7 +134,6 @@ class Server:
         print("Il SERVER riceve notifica da parte del client, il quale vorrebbe inviare un messaggio")
         content = message.text
         isFound = True
-        print(content)
         for router in self.clientConnectedInRouter:
             if message.destination_ip in self.clientConnectedInRouter[router]:
                 message.message_type = MessageType.CLIENT_RECEIVE_MESSAGE
@@ -141,7 +150,6 @@ class Server:
     def client_exit(self, message: Message, client: socket):
         print("Il SERVER riceve uscita da parte di client")
         content = message.text
-        print(content)
         self.clientConnectedInRouter[client].remove(message.source_ip)
         return message.empty()
 

@@ -1,3 +1,5 @@
+import signal
+import sys
 from socket import AF_INET, socket, SOCK_STREAM
 from classes.message import Message, MessageType
 from utilities import Utilities as util
@@ -10,7 +12,7 @@ class Router:
         self.macClientSide = input('Inserire il MAC Address dell\'interfaccia lato CLIENT: ')
         # Dizionario che continene Key=IndirizzoIP Value=socket
         self.clientIpSocket = {}
-        #Lista che mi contiene tutte le socket dei client
+        # Lista che mi contiene tutte le socket dei client
         self.broadcastMessage = []
         self.ipServerSide = ''
         self.ipClientSide = ''
@@ -18,6 +20,18 @@ class Router:
         self.routerClientSide = socket(AF_INET, SOCK_STREAM)
         self.create_connection_with_server()
         self.create_connection_with_clients()
+        signal.signal(signal.SIGINT, self.exit)
+        signal.signal(signal.SIGQUIT, self.exit)
+
+    def exit(self, signum, frame):
+        print("Uscita dallo script")
+        try:
+            self.routerServerSide.close()
+            self.routerClientSide.close()
+        except:
+            print("Errore nella chiusa dei socket")
+        finally:
+            sys.exit(0)
 
     def create_connection_with_clients(self):
         util.set_default_socket(self.routerClientSide)
@@ -38,13 +52,13 @@ class Router:
         message.source_ip = "255.255.255.255"
         message.source_mac = self.macServerSide
         message.message_type = MessageType.DHCP_ROUTER_REQUEST
-        message.text = "MyClientSocketName: " + self.routerClientSide.getsockname()[0] + "," + str(self.routerClientSide.getsockname()[1]) + "\n"
+        message.text = "MyClientSocketName: " + self.routerClientSide.getsockname()[0] + "," + str(
+            self.routerClientSide.getsockname()[1]) + "\n"
         return message
 
     def router_interface_ip(self, message: Message):
         print("Il SERVER ha restituito gli indirizzi IP delle interfacce lato client e server!")
         content = message.text
-        print(content)
         message.prepare_for_next_message()
         message.message_type = MessageType.NONE
         self.ipServerSide = content.split("\n")[0].split(":")[1]
@@ -69,8 +83,8 @@ class Router:
                     for state in self.broadcastMessage:
                         state.send(util.serializeClass(message))
                 elif message.message_type == MessageType.CLIENT_RECEIVE_MESSAGE or message.message_type == MessageType.CLIENT_NOT_FOUND or \
-                     message.message_type == MessageType.CLIENT_LIST_RESPONSE:
-                        self.clientIpSocket[message.destination_ip].send(util.serializeClass(message))
+                        message.message_type == MessageType.CLIENT_LIST_RESPONSE:
+                    self.clientIpSocket[message.destination_ip].send(util.serializeClass(message))
                 else:
                     message = self.management_server_message(message)
                     self.routerServerSide.send(util.serializeClass(message))
