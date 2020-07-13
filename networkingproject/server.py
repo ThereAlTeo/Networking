@@ -100,7 +100,7 @@ class Server:
         if len(self.routerSocketName) > 0:
             message.message_type = MessageType.ROUTER_LIST_RESPONSE
             routerSocketNameList = [key + "-" + self.routerSocketName[key] for key in self.routerSocketName]
-            message.text = "-".join(routerSocketNameList)
+            message.text = "".join(routerSocketNameList)
         else:
             message.message_type = MessageType.ROUTER_LIST_EMPTY
         return message
