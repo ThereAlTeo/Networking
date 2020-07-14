@@ -1,8 +1,8 @@
 # Elaborato di Programmazione di Reti
 
-## Ralizzato Da
+## Realizzato Da
 * Matteo Alesiani - matteo.alesiani2@studio.unibo.it - 806476
-* Tommaso Bailetti - tommaso.bailetti@studio.unibo.it -
+* Tommaso Bailetti - tommaso.bailetti@studio.unibo.it - 889120
 
 ## Traccia
 Il progetto mira a fornire una possibile soluzione della traccia 1: Server-Router-Client.

@@ -51,9 +51,8 @@ class Client:
         print("Clients connected now:")
         for value in self.connected_clients:
             print('- ' + value)
-        print("Input the IP of the client do you want to talk to (q to exit): ")
         while True:
-            selection = input('-> ')
+            selection = input('Input the IP of the client do you want to talk to (q to exit):')
             if selection == 'q':
                 break
             message = Message.empty()
