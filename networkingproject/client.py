@@ -141,6 +141,8 @@ class Client:
                 switcher.get(self.received_message.message_type)()
             except OSError:
                 break
+            except:
+                pass
 
     def handle_incoming(self):
         """
