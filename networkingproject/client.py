@@ -14,10 +14,9 @@ class Client:
     def __init__(self, target_ip: str, target_port: str):
         """
         Init the Client that targets the server for a connection
-        Parameters
-        ----------
-        target_ip: str
-        target_port: str
+        Args:
+            target_ip (str): ip of the server
+            target_port (str): port of the server
         """
         self.ip = ""
         self.connected_clients = list()
@@ -37,6 +36,9 @@ class Client:
         self.prepare_for_messaging()
 
     def prepare_for_messaging(self):
+        """
+        Prepare the Client for messaging, fetch che clients connected at the moment then send to the target IP input
+        """
         message = Message.empty()
         message.message_type = MessageType.CLIENT_LIST_REQUEST
         message.source_ip = self.ip
@@ -48,6 +50,9 @@ class Client:
         thread.start()
 
     def send_message(self):
+        """
+        Loop that manages the messaging through clients
+        """
         print("Clients connected now:")
         for value in self.connected_clients:
             print('- ' + value)
@@ -65,6 +70,9 @@ class Client:
         self.exit()
 
     def select_router(self):
+        """
+        Select a router from the given ones, avoids the null and not correct answers
+        """
         print("Finding Available Subnets...")
         message = Message.empty()
         message.message_type = MessageType.ROUTER_LIST_REQUEST
@@ -149,6 +157,9 @@ class Client:
         sys.exit(0)
 
     def init_socket(self):
+        """
+        Re-Initialize the socket
+        """
         self.sock.shutdown(SHUT_RDWR)
         self.sock.close()
         self.sock = socket(AF_INET, SOCK_STREAM)
