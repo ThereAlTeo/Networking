@@ -25,8 +25,9 @@ class Client:
         self.id = str(datetime.now().timestamp())
         self.sock = socket(AF_INET, SOCK_STREAM)
         self.sock.connect((target_ip, target_port))
-        receive_thread = Thread(target=self.receive)
-        receive_thread.start()
+        self.fetcher = Thread
+        self.receive_thread = Thread(target=self.receive)
+        self.receive_thread.start()
 
     def handle_startup(self):
         """
@@ -48,8 +49,8 @@ class Client:
         self.connected_clients = Utilities.deserializeClass(self.sock.recv(Utilities.getDefaultBufferSize()))
         self.connected_clients = self.connected_clients.text.split('-')
         self.connected_clients.remove(self.ip)
-        thread = Thread(target=self.send_message)
-        thread.start()
+        self.fetcher = Thread(target=self.send_message)
+        self.fetcher.start()
 
     def send_message(self):
         """
@@ -130,16 +131,16 @@ class Client:
         Start a Thread that filters the requests received and manages the Messages received
         """
         while True:
-            self.received_message = Utilities.deserializeClass(self.sock.recv(Utilities.getDefaultBufferSize()))
             try:
+                self.received_message = Utilities.deserializeClass(self.sock.recv(Utilities.getDefaultBufferSize()))
                 switcher = {
                     MessageType.WELCOME: self.handle_startup,
                     MessageType.CLIENT_RECEIVE_MESSAGE: self.handle_incoming,
                     MessageType.CLIENT_NOT_FOUND: self.handle_incoming
                 }
                 switcher.get(self.received_message.message_type)()
-            except:
-                pass
+            except OSError:
+                break
 
     def handle_incoming(self):
         """
