@@ -9,8 +9,8 @@ Il progetto mira a fornire una possibile soluzione della traccia 1: Server-Route
 
 ## Descrizione Soluzione
 La prima entità da eseguire è il Server, il quale attende che altri dispositivi istanzino una connessione.
-A seguito è possibile eseguire un'istanza Router, la quale richiede l'inserimento del MAC Address per 2 interfacce (uno verso il Server e l'altra verso i client).
-Una volta collegato al Server, richiede gli indirizzi IP per le interfacce pocanzi citate.
+A seguito è possibile eseguire un'istanza Router.
+Una volta collegato al Server, richiede gli indirizzi IP per le interfacce di rete da esso gestite(una verso il Server e l'altra verso i client).
 Infine è possibile eseguire istanze Client. Al momento della loro creazione verrà fornita una lista di indirizzi IP relativi a router disponibili all'interno della rete.
 Il client sceglierà in quale rete collegarsi e successivamente richiede, attraverso una procedura DHCP semplificata, il proprio indirizzo IP all'interno della rete.
 Completata questa fase preliminare, in cui le entità si scambiano informazioni attraverso i collegamenti appositamenti creati, si procede con le funzionalità richieste dalla traccia.

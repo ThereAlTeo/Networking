@@ -79,6 +79,7 @@ class Router:
             try:
                 message = util.deserializeClass(self.routerServerSide.recv(util.getDefaultBufferSize()))
                 print("E' arrivato un messaggio dal SERVER.")
+                message.source_mac = self.macClientSide
                 if message.message_type == MessageType.DHCP_ACK:
                     for state in self.broadcastMessage:
                         state.send(util.serializeClass(message))
@@ -87,6 +88,7 @@ class Router:
                     self.clientIpSocket[message.destination_ip].send(util.serializeClass(message))
                 else:
                     message = self.management_server_message(message)
+                    message.source_mac = self.macServerSide
                     self.routerServerSide.send(util.serializeClass(message))
             except OSError:
                 break
@@ -98,6 +100,7 @@ class Router:
                 if message.message_type == MessageType.CLIENT_IDENTIFY:
                     self.clientIpSocket[message.source_ip] = client
                 else:
+                    message.source_mac = self.macServerSide
                     self.routerServerSide.send(util.serializeClass(message))
             except Exception as e:
                 break
