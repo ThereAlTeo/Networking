@@ -19,6 +19,7 @@ class Client:
             target_port (str): port of the server
         """
         self.ip = ""
+        self.mac = Utilities.mac_gen()
         self.connected_clients = list()
         self.received_message = Message.empty()
         self.id = str(datetime.now().timestamp())
@@ -42,6 +43,7 @@ class Client:
         message = Message.empty()
         message.message_type = MessageType.CLIENT_LIST_REQUEST
         message.source_ip = self.ip
+        message.source_mac = self.mac
         self.sock.send(Utilities.serializeClass(message))
         self.connected_clients = Utilities.deserializeClass(self.sock.recv(Utilities.getDefaultBufferSize()))
         self.connected_clients = self.connected_clients.text.split('-')
@@ -62,6 +64,7 @@ class Client:
                 break
             message = Message.empty()
             message.source_ip = self.ip
+            message.source_mac = self.mac
             message.destination_ip = selection
             message.message_type = MessageType.CLIENT_SEND_MESSAGE
             text_to_send = input('Text to send: ')
@@ -76,6 +79,8 @@ class Client:
         print("Finding Available Subnets...")
         message = Message.empty()
         message.message_type = MessageType.ROUTER_LIST_REQUEST
+        message.source_mac = self.mac
+        message.destination_ip = "195.1.10.10"
         self.sock.send(Utilities.serializeClass(message))
         message = Utilities.deserializeClass(self.sock.recv(Utilities.getDefaultBufferSize()))
         if message.message_type == MessageType.ROUTER_LIST_EMPTY:
@@ -94,6 +99,8 @@ class Client:
         self.sock.connect(('127.0.0.1', int(connections[selection])))
         message = Message.empty()
         message.message_type = MessageType.DHCP_REQUEST
+        message.source_mac = self.mac
+        message.destination_ip = "195.1.10.10"
         message.text = self.id
         self.sock.send(Utilities.serializeClass(message))
 
@@ -114,6 +121,7 @@ class Client:
         """
         message = Message.empty()
         message.source_ip = self.ip
+        message.source_mac = self.mac
         message.message_type = MessageType.CLIENT_IDENTIFY
         self.sock.send(Utilities.serializeClass(message))
 
@@ -150,6 +158,7 @@ class Client:
         print("Shutting down the client...")
         message = Message.empty()
         message.source_ip = self.ip
+        message.source_mac = self.mac
         message.message_type = MessageType.CLIENT_EXIT
         self.sock.send(Utilities.serializeClass(message))
         self.sock.shutdown(SHUT_RDWR)

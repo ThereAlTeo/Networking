@@ -8,8 +8,8 @@ from threading import Thread
 
 class Router:
     def __init__(self):
-        self.macServerSide = input('Inserire il MAC Address dell\'interfaccia lato SERVER: ')
-        self.macClientSide = input('Inserire il MAC Address dell\'interfaccia lato CLIENT: ')
+        self.macServerSide = util.mac_gen()
+        self.macClientSide = util.mac_gen()
         # Dizionario che continene Key=IndirizzoIP Value=socket
         self.clientIpSocket = {}
         # Lista che mi contiene tutte le socket dei client
